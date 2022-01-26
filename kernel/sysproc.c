@@ -97,3 +97,8 @@ sys_partA(void)
 {
   return partACount;
 }
+
+int sys_partB(void)
+{
+  return partBCounter;
+}
