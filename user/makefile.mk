@@ -17,6 +17,7 @@ USER_PROGS := \
 	usertests\
 	getpidTest\
 	partATest\
+	partBTest\
 	wc\
 	zombie
 

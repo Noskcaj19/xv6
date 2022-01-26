@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "sysfunc.h"
 #include "spinlock.h"
+#include "partBCounter.h"
 
 struct spinlock partACountLock;
 static uint partACount = 0;
@@ -100,5 +101,10 @@ sys_uptime(void)
 int
 sys_partA(void)
 {
-return partACount;
+  return partACount;
+}
+
+int sys_partB(void)
+{
+  return partBCounter;
 }
