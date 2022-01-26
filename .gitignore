@@ -1,0 +1,15 @@
+*.o
+*.d
+/fs.img
+/initcode
+/xv6.img
+/tools/mkfs
+/bootother
+/user/bin/
+/kernel/bootblock
+/kernel/bootblock.out
+/kernel/bootother.out
+/kernel/initcode.out
+/kernel/kernel
+/kernel/vectors.S
+/fs/
