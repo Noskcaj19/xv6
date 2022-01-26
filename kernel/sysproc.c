@@ -6,6 +6,8 @@
 #include "proc.h"
 #include "sysfunc.h"
 
+static uint partACount = 0;
+
 int
 sys_fork(void)
 {
@@ -38,6 +40,7 @@ sys_kill(void)
 int
 sys_getpid(void)
 {
+  partACount++;
   return proc->pid;
 }
 
@@ -87,4 +90,10 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_partA(void)
+{
+  return partACount;
 }
