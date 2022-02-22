@@ -1,3 +1,4 @@
+// clang-format off
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -5,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "pstat.h"
+#include "random.h"
+// clang-format on
 
 struct {
   struct spinlock lock;
@@ -45,6 +49,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->ticks = 0;
+  p->tickets = 1;
   release(&ptable.lock);
 
   // Allocate kernel stack if possible.
@@ -143,6 +149,7 @@ fork(void)
   }
   np->sz = proc->sz;
   np->parent = proc;
+  np->tickets = proc->tickets;
   *np->tf = *proc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -229,6 +236,9 @@ wait(void)
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
+        p->tickets = 0;
+        p->ticks = 0;
+
         release(&ptable.lock);
         return pid;
       }
@@ -263,25 +273,42 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+    int counter = 0;
+
+    int totaltickets = 0;
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE)
+        continue;
+      totaltickets += p->tickets;
+    }
+
+    uint winner = totaltickets > 0 ? random() % totaltickets + 1 : 0;
+
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE)
         continue;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+      counter += p->tickets;
+      if (counter >= winner) {
+        proc = p;
+        goto lottoDone;
+      }
     }
-    release(&ptable.lock);
+    goto loopFinish;
+  lottoDone:
 
+    proc->ticks++;
+
+    switchuvm(proc);
+    proc->state = RUNNING;
+    swtch(&cpu->scheduler, proc->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    proc = 0;
+  loopFinish:
+    release(&ptable.lock);
   }
 }
 
@@ -405,6 +432,27 @@ kill(int pid)
   }
   release(&ptable.lock);
   return -1;
+}
+
+int getpinfo(struct pstat *out) {
+  int pstatIdx = 0;
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == UNUSED)
+      continue;
+    out->inuse[pstatIdx] = 1;
+    out->pid[pstatIdx] = p->pid;
+    out->tickets[pstatIdx] = p->tickets;
+    out->ticks[pstatIdx] = p->ticks;
+    pstatIdx++;
+  }
+
+  return 0;
+}
+
+int setticket(int newTickets) {
+  cprintf("setting pid %d to %d tickets\n", proc->pid, newTickets);
+  proc->tickets = newTickets;
+  return 0;
 }
 
 // Print a process listing to console.  For debugging.

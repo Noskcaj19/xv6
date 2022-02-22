@@ -2,6 +2,8 @@
 # user programs
 USER_PROGS := \
 	cat\
+	tktest\
+	ps\
 	echo\
 	forktest\
 	grep\
