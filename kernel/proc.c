@@ -5,6 +5,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "queue.h"
 
 struct {
   struct spinlock lock;
@@ -12,6 +13,8 @@ struct {
 } ptable;
 
 static struct proc *initproc;
+
+struct queue_t queue[NPRIO] = {0};
 
 int nextpid = 1;
 extern void forkret(void);
@@ -45,6 +48,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  queue_append(&queue[0], p);
   release(&ptable.lock);
 
   // Allocate kernel stack if possible.
@@ -219,6 +223,12 @@ wait(void)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){
+        for (struct queue_t* q = queue; q <= &queue[NPRIO-1]; q++) {
+          if (queue_remove(q, p->pid) != NULL) {
+            break;
+          }
+        }
+
         // Found one.
         pid = p->pid;
         kfree(p->kstack);
@@ -255,33 +265,43 @@ wait(void)
 void
 scheduler(void)
 {
-  struct proc *p;
-
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+    for (int curPrio = 0; curPrio < NPRIO; curPrio++) {
+      struct queue_t *q = &queue[curPrio];
+      if (q->size == 0) {
         continue;
+      }
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
-      swtch(&cpu->scheduler, proc->context);
-      switchkvm();
+      acquire(&ptable.lock);
+      struct proc *head = queue_pop_front(q);
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      proc = 0;
+      if (head == NULL) {
+        // do nothing
+      } else if (head->state != RUNNABLE) {
+        queue_append(q, head);
+      } else {
+        //        queue_print(q);
+        proc = head;
+        switchuvm(proc);
+        proc->state = RUNNING;
+        swtch(&cpu->scheduler, proc->context);
+        switchkvm();
+        // `yield()` sets state to RUNNABLE if it has preempted a process
+        if (proc->state == RUNNABLE) {
+          queue_append(curPrio+1<NPRIO ? &queue[curPrio+1] : q, proc);
+        } else {
+          // Otherwise, `state` is SLEEPING, add it back to the same queue
+          queue_append(q, proc);
+        }
+
+        proc = 0;
+      }
+      release(&ptable.lock);
     }
-    release(&ptable.lock);
-
   }
 }
 

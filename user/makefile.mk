@@ -7,6 +7,7 @@ USER_PROGS := \
 	grep\
 	init\
 	kill\
+	sched_brute\
 	ln\
 	ls\
 	mkdir\
