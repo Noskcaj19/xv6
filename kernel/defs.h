@@ -109,6 +109,7 @@ void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
+void            age(void);
 void            yield(void);
 int             getpinfo(struct pstat*);
 

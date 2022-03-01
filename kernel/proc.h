@@ -11,6 +11,7 @@
 #define NSEGS     7
 #define NPRIO     10  // number of priorities
 #define QUANT_MULT 1.25 // quantum multiplier - how many times larger is each successive priority quantum
+#define AGE_PERIOD 100 // how many ticks to wait before aging a process
 
 // Per-CPU state
 struct cpu {

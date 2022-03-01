@@ -334,6 +334,25 @@ sched(void)
   cpu->intena = intena;
 }
 
+void
+age(void)
+{
+  acquire(&ptable.lock);  //DOC: yieldlock
+  for (struct queue_t *q = queue; q <= &queue[NPRIO-1]; q++) {
+    for (int i = 0; i < q->size; i++) {
+      q->root[i] = NULL;
+    }
+    q->size = 0; 
+  }
+  for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNABLE){
+      p->priority = 0;
+      queue_append(&queue[0], p);
+    }
+  } 
+  release(&ptable.lock);
+}
+
 // Give up the CPU for one scheduling round.
 void
 yield(void)

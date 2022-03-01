@@ -111,6 +111,14 @@ trap(struct trapframe *tf)
     }
   }
 
+  static int lastAge = 0;
+  acquire(&tickslock);
+  if (ticks - lastAge > AGE_PERIOD) {
+    lastAge = ticks;
+    age();
+  }
+  release(&tickslock);
+
   // Check if the process has been killed since we yielded
   if(proc && proc->killed && (tf->cs&3) == DPL_USER)
     exit();
