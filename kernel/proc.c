@@ -48,6 +48,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 0;
   queue_append(&queue[0], p);
   release(&ptable.lock);
 
@@ -225,6 +226,7 @@ wait(void)
       if(p->state == ZOMBIE){
         for (struct queue_t* q = queue; q <= &queue[NPRIO-1]; q++) {
           if (queue_remove(q, p->pid) != NULL) {
+            p->priority = -1;
             break;
           }
         }
@@ -292,7 +294,8 @@ scheduler(void)
         switchkvm();
         // `yield()` sets state to RUNNABLE if it has preempted a process
         if (proc->state == RUNNABLE) {
-          queue_append(curPrio+1<NPRIO ? &queue[curPrio+1] : q, proc);
+          proc->priority = curPrio + 1 < NPRIO ? curPrio + 1 : curPrio;
+          queue_append(curPrio + 1 < NPRIO ? &queue[curPrio + 1] : q, proc);
         } else {
           // Otherwise, `state` is SLEEPING, add it back to the same queue
           queue_append(q, proc);
