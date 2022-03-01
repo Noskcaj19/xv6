@@ -99,8 +99,17 @@ trap(struct trapframe *tf)
 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
-  if(proc && proc->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER)
-    yield();
+  if(proc && proc->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER) {
+    // Process is allowed PRIOIRTY * QUANT_MULTI ticks to run
+    if (proc->quantum_passover < proc->priority * QUANT_MULT) {
+      // cprintf("pid (%d, %d, %d): pass over %d\n", proc->pid, proc->priority, QUANT_MULT, proc->quantum_passover);
+      proc->quantum_passover++;
+    } else {
+      // cprintf("pid %d: ran out of eval time\n", proc->quantum_passover);
+      proc->quantum_passover = 0;
+      yield();
+    }
+  }
 
   // Check if the process has been killed since we yielded
   if(proc && proc->killed && (tf->cs&3) == DPL_USER)

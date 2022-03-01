@@ -10,6 +10,7 @@
 #define SEG_TSS   6  // this process's task state
 #define NSEGS     7
 #define NPRIO     10  // number of priorities
+#define QUANT_MULT 1.25 // quantum multiplier - how many times larger is each successive priority quantum
 
 // Per-CPU state
 struct cpu {
@@ -76,6 +77,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int priority;                // Process priority
+  int quantum_passover;        // How many times the process has been ticked at 100hz
 };
 
 // Process memory is laid out contiguously, low addresses first:

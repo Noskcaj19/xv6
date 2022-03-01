@@ -52,6 +52,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 0;
+  p->quantum_passover = 0;
   queue_append(&queue[0], p);
   release(&ptable.lock);
 
@@ -244,6 +245,8 @@ wait(void)
         p->parent = 0;
         p->name[0] = 0;
         p->killed = 0;
+        p->priority = 0;
+        p->quantum_passover = 0;
         release(&ptable.lock);
         return pid;
       }
