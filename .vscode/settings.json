@@ -2,5 +2,24 @@
     "files.exclude": {
         "**/*.d": true,
         "**/*.o": true
+    },
+    "files.associations": {
+        "mmu.h": "c",
+        "defs.h": "c",
+        "stat.h": "c",
+        "user.h": "c",
+        "types.h": "c",
+        "sysfunc.h": "c",
+        "proc.h": "c",
+        "typeinfo": "c",
+        "pstat.h": "c",
+        "x86.h": "c",
+        "param.h": "c",
+        "locale": "c",
+        "string": "c",
+        "spinlock.h": "c",
+        "queue.h": "c",
+        "ostream": "c",
+        "fcntl.h": "c"
     }
 }

@@ -1,3 +1,4 @@
+// clang-format off
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -6,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "queue.h"
+#include "pstat.h"
+// clang-format on
 
 struct {
   struct spinlock lock;
@@ -428,6 +431,25 @@ kill(int pid)
   }
   release(&ptable.lock);
   return -1;
+}
+
+int getpinfo(struct pstat *out) {
+  acquire(&ptable.lock);
+  int pstatIdx = 0;
+
+  for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == UNUSED)
+      continue;
+    out->inuse[pstatIdx] = 1;
+    out->pid[pstatIdx] = p->pid;
+    out->priority[pstatIdx] = -1;
+    out->priority[pstatIdx] = p->priority;
+    strncpy(out->name[pstatIdx], p->name, sizeof(p->name));
+    pstatIdx++;
+  }
+  release(&ptable.lock);
+
+  return 0;
 }
 
 // Print a process listing to console.  For debugging.

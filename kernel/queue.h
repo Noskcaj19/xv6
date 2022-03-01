@@ -18,6 +18,7 @@ struct proc *queue_pop_front(struct queue_t *);
 struct proc* queue_pop(struct queue_t *q, int idx);
 //struct proc &*queue_find(struct queue_t *q, struct proc pid);
 struct proc *queue_remove(struct queue_t *q, int pid);
+struct proc *queue_find(struct queue_t *q, int pid);
 void queue_print(struct queue_t *);
 
 #endif // QUEUE_H

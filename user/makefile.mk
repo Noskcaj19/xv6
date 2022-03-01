@@ -2,6 +2,8 @@
 # user programs
 USER_PROGS := \
 	cat\
+	ps\
+	mlfqtest\
 	echo\
 	forktest\
 	grep\

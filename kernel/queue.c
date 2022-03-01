@@ -47,6 +47,15 @@ struct proc *queue_remove(struct queue_t *q, int pid) {
   return NULL;
 }
 
+struct proc *queue_find(struct queue_t *q, int pid) {
+  for (int i = 0; i < q->size; i++) {
+    if (q->root[i]->pid == pid) {
+      return q->root[i];
+    }
+  }
+  return NULL;
+}
+
 void queue_print(struct queue_t *q) {
   for (int i = 0; i < q->size; i++)
     cprintf("%d ", q->root[i]->pid);
